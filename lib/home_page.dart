@@ -9,6 +9,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String displayValue = "";
+  String calculationValue = "";
+  bool isReplace = false;
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +24,9 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(
                 height: 150,
               ),
-              const Text(
-                "125*20",
-                style: TextStyle(color: Colors.white, fontSize: 20),
+              Text(
+                calculationValue,
+                style: const TextStyle(color: Colors.white, fontSize: 20),
               ),
               const SizedBox(
                 height: 20,
@@ -66,7 +68,7 @@ class _HomePageState extends State<HomePage> {
                       calculatorButton(buttonName: "9"),
                       calculatorButton(buttonName: "6"),
                       calculatorButton(buttonName: "3"),
-                      calculatorButton(buttonName: ","),
+                      calculatorButton(buttonName: "."),
                     ],
                   ),
                   Column(
@@ -88,6 +90,107 @@ class _HomePageState extends State<HomePage> {
         ));
   }
 
+  void checkLogic({required String buttonName}) {
+    setState(() {
+      if (buttonName == "C") {
+        setState(() {
+          displayValue = "";
+          calculationValue = "";
+          isReplace = false;
+        });
+      } else if (buttonName == "X") {
+        displayValue = displayValue.substring(0, displayValue.length - 1);
+      } else if (buttonName == "=") {
+        if (calculationValue.endsWith("+") ||
+            calculationValue.endsWith("-") ||
+            calculationValue.endsWith("*") ||
+            calculationValue.endsWith("/")) {
+          String operatorValue = calculationValue[calculationValue.length - 1];
+          num firstValue = num.parse(
+              calculationValue.substring(0, calculationValue.length - 1));
+          num secondValue = num.parse(displayValue);
+          num? result;
+          if (operatorValue == "+") {
+            calculationValue = "$firstValue $operatorValue $secondValue =";
+            result = firstValue + secondValue;
+            displayValue = result.toString();
+          } else if (operatorValue == "-") {
+            calculationValue = "$firstValue $operatorValue $secondValue =";
+            result = firstValue - secondValue;
+            displayValue = result.toString();
+          } else if (operatorValue == "*") {
+            calculationValue = "$firstValue $operatorValue $secondValue =";
+            result = firstValue * secondValue;
+            displayValue = result.toString();
+          } else if (operatorValue == "/") {
+            calculationValue = "$firstValue $operatorValue $secondValue =";
+            result = firstValue / secondValue;
+            displayValue = result.toString();
+          }
+        }
+      } else if (buttonName == "*" ||
+          buttonName == "/" ||
+          buttonName == "-" ||
+          buttonName == "+") {
+        setState(() {
+          if (displayValue.isNotEmpty && calculationValue.isEmpty) {
+            calculationValue = displayValue + buttonName;
+          } else if (calculationValue.isNotEmpty) {
+            String operatorValue =
+                calculationValue[calculationValue.length - 1];
+            num firstValue = num.parse(
+                calculationValue.substring(0, calculationValue.length - 1));
+            num secondValue = num.parse(displayValue);
+            num? result;
+
+            if (operatorValue == "+") {
+              result = firstValue + secondValue;
+              displayValue = result.toString();
+
+              calculationValue = "$result $buttonName";
+            } else if (operatorValue == "-") {
+              result = firstValue - secondValue;
+              displayValue = result.toString();
+              calculationValue = "$result $buttonName";
+            } else if (operatorValue == "*") {
+              result = firstValue * secondValue;
+              displayValue = result.toString();
+              calculationValue = "$result $buttonName";
+            } else if (operatorValue == "/") {
+              result = firstValue / secondValue;
+              displayValue = result.toString();
+              calculationValue = "$result $buttonName";
+            }
+            isReplace = false;
+          }
+        });
+      } else if (int.tryParse(buttonName) != null) {
+        String? lastCharacterOfCalculationVal;
+        if (calculationValue.isNotEmpty) {
+          lastCharacterOfCalculationVal =
+              calculationValue[calculationValue.length - 1];
+          if (lastCharacterOfCalculationVal == "+" ||
+              lastCharacterOfCalculationVal == "-" ||
+              lastCharacterOfCalculationVal == "*" ||
+              lastCharacterOfCalculationVal == "/") {
+            if (isReplace) {
+              displayValue = displayValue + buttonName;
+            } else {
+              displayValue = buttonName;
+              isReplace = true;
+            }
+          } else if (calculationValue.endsWith("=")) {
+            calculationValue = "";
+            displayValue = buttonName;
+            isReplace = false;
+          }
+        } else {
+          displayValue = displayValue + buttonName;
+        }
+      }
+    });
+  }
+
   Padding calculatorButton(
       {required String buttonName,
       bool isEqualButton = false,
@@ -96,9 +199,7 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(4.0),
       child: InkWell(
         onTap: () {
-          setState(() {
-            displayValue = displayValue + buttonName;
-          });
+          checkLogic(buttonName: buttonName);
         },
         child: Container(
           width: 60,
