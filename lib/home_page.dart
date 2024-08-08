@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,7 +23,43 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               const SizedBox(
-                height: 150,
+                height: 30,
+              ),
+              IconButton(
+                onPressed: () async {
+                  final SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+                  //prefs.clear();
+                  int count = prefs.getInt("count")!;
+                  List<ListTile> calHistory = [];
+                  for (int i = 1; i < count; i++) {
+                    print(prefs.getString("val_$i"));
+                    calHistory.add(
+                      ListTile(
+                        title: Text(
+                          "${prefs.getString("val_$i")}",
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                        tileColor: Colors.green,
+                      ),
+                    );
+                  }
+
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) => Container(
+                      padding: const EdgeInsets.all(10),
+                      child: ListView(children: calHistory),
+                    ),
+                  );
+                },
+                icon: const Icon(
+                  Icons.history,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(
+                height: 120,
               ),
               Text(
                 calculationValue,
@@ -127,6 +164,7 @@ class _HomePageState extends State<HomePage> {
             result = firstValue / secondValue;
             displayValue = result.toString();
           }
+          saveData();
         }
       } else if (buttonName == "*" ||
           buttonName == "/" ||
@@ -189,6 +227,21 @@ class _HomePageState extends State<HomePage> {
         }
       }
     });
+  }
+
+  Future<void> saveData() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    int valueCount = 1;
+
+    if (prefs.containsKey("count")) {
+      valueCount = prefs.getInt("count")!;
+
+      prefs.setInt("count", valueCount + 1);
+    } else {
+      prefs.setInt("count", 1);
+    }
+
+    prefs.setString("val_$valueCount", "$calculationValue $displayValue");
   }
 
   Padding calculatorButton(
